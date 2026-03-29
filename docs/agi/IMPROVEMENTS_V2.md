@@ -1,16 +1,16 @@
-# MuninnDB 认知引擎增强补丁 (v2)
+# MuninnDB Cognitive Engine Enhancement Patch (v2)
 
-**补丁版本**: v2  
-**日期**: 2026-03-29  
-**状态**: 待实施
+**Patch Version**: v2
+**Date**: 2026-03-29
+**Status**: Pending Implementation
 
 ---
 
-## 改进 1: 暴露配置参数 (消除魔法数字)
+## Improvement 1: Expose Configuration Parameters (Eliminate Magic Numbers)
 
 ### File: `internal/engine/dynamic_forgetting.go`
 
-**Change**: 将魔法数字移至可配置结构体
+**Change**: Move magic numbers to configurable struct
 
 ```go
 // SpacingEffectConfig holds configuration for spacing effect calculation.
@@ -79,11 +79,11 @@ func SpacingEffectBonus(history []AccessEvent) float64 {
 
 ---
 
-## 改进 2: 并发压力测试
+## Improvement 2: Concurrency Stress Tests
 
 ### File: `internal/engine/cognitive_e2e_test.go`
 
-**Add**: 并发压力测试
+**Add**: Concurrency stress tests
 
 ```go
 // TestConcurrentPushRehearse tests concurrent access to WorkingMemoryBuffer.
@@ -186,9 +186,9 @@ func TestConcurrentConsolidation(t *testing.T) {
 
 ---
 
-## 改进 3: Prometheus 监控指标
+## Improvement 3: Prometheus Monitoring Metrics
 
-### File: `internal/engine/consolidation_metrics.go` (新增)
+### File: `internal/engine/consolidation_metrics.go` (New)
 
 **Add**: Prometheus metrics for consolidation monitoring
 
@@ -323,7 +323,7 @@ func (s *ConsolidationScheduler) processJob(job ConsolidationJob) {
 
 ---
 
-## 改进 4: WorkingMemory 指标集成
+## Improvement 4: WorkingMemory Metrics Integration
 
 ### File: `internal/engine/working_memory.go`
 
@@ -356,29 +356,29 @@ func (wm *WorkingMemoryBuffer) Push(engram *storage.Engram) *storage.Engram {
 
 ---
 
-## 验证命令
+## Verification Commands
 
 ```bash
-# 运行并发测试
+# Run concurrency tests
 go test ./internal/engine/... \
   -run "TestConcurrent" \
   -race \
   -v
 
-# 验证 Prometheus 指标
+# Verify Prometheus metrics
 curl http://localhost:8475/metrics | grep muninndb_consolidation
 ```
 
 ---
 
-## Prometheus 仪表板示例
+## Prometheus Dashboard Example
 
 ```promql
 # Consolidation rate (per minute)
 rate(muninndb_consolidation_total[1m]) * 60
 
 # Consolidation failure rate (%)
-rate(muninndb_consolidation_failures_total[5m]) / 
+rate(muninndb_consolidation_failures_total[5m]) /
   (rate(muninndb_consolidation_total[5m]) + rate(muninndb_consolidation_failures_total[5m])) * 100
 
 # Working memory eviction rate (per minute)
@@ -393,6 +393,6 @@ muninndb_consolidation_queue_size
 
 ---
 
-*补丁版本：v2*  
-*状态：待实施*  
-*下一步：代码审查 → 合并*
+*Patch Version: v2*
+*Status: Pending Implementation*
+*Next Steps: Code review → Merge*
