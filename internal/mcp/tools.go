@@ -728,5 +728,40 @@ func allToolDefinitions() []ToolDefinition {
 				"required": []string{},
 			},
 		},
+		// Phase 3: Metacognition tools
+		{
+			Name:        "muninn_metacognition_health",
+			Description: "Get comprehensive knowledge base health report including coverage, confidence entropy, freshness, and actionable recommendations.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"vault": vaultProp,
+				},
+				"required": []string{},
+			},
+		},
+		{
+			Name:        "muninn_metacognition_coverage",
+			Description: "Analyze knowledge coverage for a specific query, identifying blind spots and providing recommendations for improvement.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"vault": vaultProp,
+					"query": map[string]any{"type": "string", "description": "The query or topic to analyze coverage for."},
+				},
+				"required": []string{"query"},
+			},
+		},
+		{
+			Name:        "muninn_metacognition_entropy",
+			Description: "Calculate confidence entropy to detect uncertainty and contradictions in the knowledge base.",
+			InputSchema: map[string]any{
+				"type": "object",
+				"properties": map[string]any{
+					"vault": vaultProp,
+				},
+				"required": []string{},
+			},
+		},
 	}
 }

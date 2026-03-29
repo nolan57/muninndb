@@ -274,6 +274,11 @@ func (s *MCPServer) dispatchToolCall(ctx context.Context, w http.ResponseWriter,
 		// Entity aggregate view
 		"muninn_entity":   s.handleEntity,
 		"muninn_entities": s.handleEntities,
+
+		// Phase 3: Metacognition tools
+		"muninn_metacognition_health":   s.handleMetacognitionHealth,
+		"muninn_metacognition_coverage": s.handleMetacognitionCoverage,
+		"muninn_metacognition_entropy":  s.handleMetacognitionEntropy,
 	}
 
 	handler, found := handlers[req.Params.Name]

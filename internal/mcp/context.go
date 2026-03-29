@@ -195,7 +195,10 @@ func isReadOnlyTool(name string) bool {
 		"muninn_entity_timeline",
 		"muninn_provenance",
 		"muninn_entity",
-		"muninn_entities":
+		"muninn_entities",
+		"muninn_metacognition_health",
+		"muninn_metacognition_coverage",
+		"muninn_metacognition_entropy":
 		return true
 	}
 	return false
