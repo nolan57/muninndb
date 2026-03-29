@@ -105,10 +105,10 @@ type Association struct {
 	Weight            float32 // 0.0-1.0, Hebbian-adjustable
 	Confidence        float32 // 0.0-1.0
 	CreatedAt         time.Time
-	LastActivated     int32   // Unix seconds (not nanoseconds; int32 is sufficient)
+	LastActivated     int32   // Unix seconds (Y2038-safe until 2106 via uint32 interpretation)
 	PeakWeight        float32 // historical max Weight; 0 = untracked (legacy pre-upgrade)
 	CoActivationCount uint32  // lifetime Hebbian co-activation count; 0 = pre-feature/unknown
-	RestoredAt        int32   // Unix seconds; 0 = never restored
+	RestoredAt        int32   // Unix seconds; 0 = never restored (Y2038 note: treat as uint32 for dates >2038)
 }
 
 // LifecycleState is the engram state machine (uint8 on disk).
@@ -286,6 +286,147 @@ func ParseMemoryType(s string) (MemoryType, bool) {
 		return TypeReference, true
 	default:
 		return TypeFact, false
+	}
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Cognitive Memory Types (Phase 1: Cognitive Enhancement)
+// Based on Atkinson-Shiffrin multi-store model and neuroscience research
+// ──────────────────────────────────────────────────────────────────
+
+// Cognitive Memory Type constants (higher range to avoid conflict with existing types).
+// These map to cognitive memory systems with different encoding/consolidation characteristics.
+const (
+	// TypeCognitiveBase marks the start of cognitive type range.
+	TypeCognitiveBase MemoryType = 0x80
+
+	// MemoryTypeSensory: Sensory memory — ultra-short-term buffer (<100ms).
+	// Used for raw input暂存 before cognitive processing. Automatically decays.
+	MemoryTypeSensory MemoryType = 0x80
+
+	// MemoryTypeWorking: Working memory — short-term buffer (seconds to minutes).
+	// Capacity: 7±2 items (Miller's Law). Requires rehearsal to avoid decay.
+	MemoryTypeWorking MemoryType = 0x81
+
+	// MemoryTypeEpisodic: Episodic memory — specific events with temporal context.
+	// Long-term storage of experiences, conversations, incidents.
+	MemoryTypeEpisodic MemoryType = 0x82
+
+	// MemoryTypeSemantic: Semantic memory — abstract knowledge, facts, concepts.
+	// Long-term storage of generalized knowledge without temporal context.
+	MemoryTypeSemantic MemoryType = 0x83
+
+	// MemoryTypeProcedural: Procedural memory — skills, workflows, motor patterns.
+	// Long-term storage of "how to" knowledge. Most resistant to forgetting.
+	MemoryTypeProcedural MemoryType = 0x84
+)
+
+// IsCognitiveType returns true if the memory type is from the cognitive type range.
+func (mt MemoryType) IsCognitiveType() bool {
+	return mt >= TypeCognitiveBase
+}
+
+// CognitiveTypeString returns the canonical string name for cognitive memory types.
+// For non-cognitive types, returns the standard String() output.
+func (mt MemoryType) CognitiveTypeString() string {
+	if !mt.IsCognitiveType() {
+		return mt.String()
+	}
+	switch mt {
+	case MemoryTypeSensory:
+		return "sensory"
+	case MemoryTypeWorking:
+		return "working"
+	case MemoryTypeEpisodic:
+		return "episodic"
+	case MemoryTypeSemantic:
+		return "semantic"
+	case MemoryTypeProcedural:
+		return "procedural"
+	default:
+		return "cognitive_unknown"
+	}
+}
+
+// ParseCognitiveMemoryType parses a cognitive memory type string.
+// Returns MemoryTypeSemantic and false if not recognized.
+func ParseCognitiveMemoryType(s string) (MemoryType, bool) {
+	switch s {
+	case "sensory":
+		return MemoryTypeSensory, true
+	case "working":
+		return MemoryTypeWorking, true
+	case "episodic":
+		return MemoryTypeEpisodic, true
+	case "semantic":
+		return MemoryTypeSemantic, true
+	case "procedural":
+		return MemoryTypeProcedural, true
+	default:
+		return MemoryTypeSemantic, false
+	}
+}
+
+// CanConsolidate returns true if this memory type can consolidate to long-term storage.
+// Sensory memory cannot consolidate — it always decays.
+func (mt MemoryType) CanConsolidate() bool {
+	if !mt.IsCognitiveType() {
+		return true // default types consolidate
+	}
+	switch mt {
+	case MemoryTypeSensory:
+		return false
+	default:
+		return true
+	}
+}
+
+// DefaultDecayTime returns the default decay time in seconds for cognitive memory types.
+// These are baseline values — actual decay is modulated by access patterns and spacing effect.
+func (mt MemoryType) DefaultDecayTime() float64 {
+	if !mt.IsCognitiveType() {
+		return 2592000.0 // default 30 days for legacy types
+	}
+	switch mt {
+	case MemoryTypeSensory:
+		return 0.1 // 100ms
+	case MemoryTypeWorking:
+		return 30.0 // 30 seconds without rehearsal
+	case MemoryTypeEpisodic:
+		return 2592000.0 // 30 days
+	case MemoryTypeSemantic:
+		return 7776000.0 // 90 days
+	case MemoryTypeProcedural:
+		return 31536000.0 // 1 year
+	default:
+		return 2592000.0
+	}
+}
+
+// RequiresRehearsal returns true if this memory type requires rehearsal to avoid decay.
+func (mt MemoryType) RequiresRehearsal() bool {
+	if !mt.IsCognitiveType() {
+		return false
+	}
+	switch mt {
+	case MemoryTypeSensory, MemoryTypeWorking:
+		return true
+	default:
+		return false
+	}
+}
+
+// DefaultCapacity returns the default capacity limit for memory types with bounded capacity.
+// Returns -1 for types without capacity limits.
+func (mt MemoryType) DefaultCapacity() int {
+	if !mt.IsCognitiveType() {
+		return -1 // no capacity limit for default types
+	}
+	switch mt {
+	case MemoryTypeWorking:
+		return 7 // Miller's Law: 7±2 items
+	default:
+		return -1 // no limit
 	}
 }
 
